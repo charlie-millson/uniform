@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote My Uniform</title>
+    <style>
+        :root {
+            --primary: #FFFC00; /* Snapchat Yellow */
+            --dark: #1a1a1a;
+            --light: #ffffff;
+            --gray: #333333;
+            --accent: #007bff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #000;
+            color: var(--light);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px; /* Phone size */
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(255, 252, 0, 0.3);
+        }
+
+        p.instructions {
+            text-align: center;
+            font-size: 14px;
+            color: #ccc;
+            margin-bottom: 30px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-card {
+            background-color: var(--gray);
+            border: 2px solid var(--gray);
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .option-card:active {
+            transform: scale(0.98);
+        }
+
+        /* Styles for when an item is selected */
+        .option-card.selected {
+            border-color: var(--primary);
+            background-color: #2a2a2a;
+        }
+
+        .rank-badge {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: transparent;
+            border: 2px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Rank Colors */
+        .rank-1 { background-color: #FFD700; color: #000; border: none; box-shadow: 0 0 10px #FFD700; } /* Gold */
+        .rank-2 { background-color: #C0C0C0; color: #000; border: none; } /* Silver */
+        .rank-3 { background-color: #CD7F32; color: #000; border: none; } /* Bronze */
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button.submit-btn {
+            background-color: var(--primary);
+            color: #000;
+            font-weight: 800;
+            border: none;
+            padding: 15px;
+            border-radius: 30px;
+            font-size: 18px;
+            cursor: pointer;
+            opacity: 0.5;
+            pointer-events: none;
+            transition: 0.3s;
+        }
+
+        button.submit-btn.active {
+            opacity: 1;
+            pointer-events: all;
+            box-shadow: 0 0 15px rgba(255, 252, 0, 0.5);
+        }
+
+        button.reset-btn {
+            background: transparent;
+            color: #777;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: underline;
+        }
+
+        /* Hidden form for Netlify/Formspree */
+        #hidden-form {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Help Pick My Fit 👕</h1>
+        <p class="instructions">Tap your top 3 choices in order.<br>1st = Gold, 2nd = Silver, 3rd = Bronze.</p>
+
+        <div class="options-list" id="options-container">
+            </div>
+
+        <div class="controls">
+            <button class="submit-btn" id="submit-btn" onclick="submitVote()">Send Vote 🚀</button>
+            <button class="reset-btn" onclick="resetVotes()">Reset Selection</button>
+        </div>
+    </div>
+
+    <form id="hidden-form" action="https://formspree.io/f/mqajdbzz" method="POST">
+        <input type="hidden" name="First_Choice_3pts" id="input-1">
+        <input type="hidden" name="Second_Choice_2pts" id="input-2">
+        <input type="hidden" name="Third_Choice_1pt" id="input-3">
+    </form>
+
+    <script>
+        const items = [
+            "Club pants",
+            "Weather pants",
+            "Track pants",
+            "Focus shorts",
+            "Focus tech sweatpants"
+        ];
+
+        let selections = []; // Stores the clicked items in order
+
+        const container = document.getElementById('options-container');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Initialize the list
+        function renderList() {
+            container.innerHTML = '';
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'option-card';
+                
+                // Check if this item is selected
+                const index = selections.indexOf(item);
+                
+                let badgeContent = '';
+                let badgeClass = '';
+
+                if (index > -1) {
+                    card.classList.add('selected');
+                    const rank = index + 1;
+                    badgeContent = rank; // 1, 2, or 3
+                    badgeClass = `rank-${rank}`;
+                }
+
+                card.innerHTML = `
+                    <span>${item}</span>
+                    <div class="rank-badge ${badgeClass}">${badgeContent}</div>
+                `;
+
+                card.onclick = () => handleSelection(item);
+                container.appendChild(card);
+            });
+
+            updateSubmitButton();
+        }
+
+        function handleSelection(item) {
+            const index = selections.indexOf(item);
+
+            if (index > -1) {
+                // If already selected, remove it (deselect)
+                selections.splice(index, 1);
+            } else {
+                // If not selected, add it (only if we have less than 3)
+                if (selections.length < 3) {
+                    selections.push(item);
+                }
+            }
+            renderList();
+        }
+
+        function updateSubmitButton() {
+            if (selections.length === 3) {
+                submitBtn.classList.add('active');
+                submitBtn.innerText = "Send Vote 🚀";
+            } else {
+                submitBtn.classList.remove('active');
+                const remaining = 3 - selections.length;
+                submitBtn.innerText = `Pick ${remaining} more`;
+            }
+        }
+
+        function resetVotes() {
+            selections = [];
+            renderList();
+        }
+
+        function submitVote() {
+            if (selections.length !== 3) return;
+
+            // Populate hidden form
+            document.getElementById('input-1').value = selections[0];
+            document.getElementById('input-2').value = selections[1];
+            document.getElementById('input-3').value = selections[2];
+
+            // Submit the hidden form
+            document.getElementById('hidden-form').submit();
+        }
+
+        // Initial Render
+        renderList();
+    </script>
+</body>
+</html>
