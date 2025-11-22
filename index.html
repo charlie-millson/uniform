@@ -53,7 +53,45 @@
         .intro p {
             font-size: 12px;
             color: #666;
-            margin: 0;
+            margin: 0 0 20px 0;
+        }
+
+        /* --- Name Input --- */
+        .name-wrapper {
+            margin: 0 auto 10px auto;
+            max-width: 250px;
+            position: relative;
+        }
+
+        input#voter-name {
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid #ccc;
+            padding: 10px 5px;
+            text-align: center;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            background: transparent;
+            border-radius: 0;
+            transition: 0.3s;
+        }
+
+        input#voter-name:focus {
+            border-bottom-color: #000;
+        }
+        
+        input#voter-name::placeholder {
+            color: #ccc;
+            font-weight: 300;
+        }
+
+        input#voter-name.error {
+            border-bottom-color: #ff0000;
+            color: #ff0000;
+        }
+        input#voter-name.error::placeholder {
+            color: #ffaaaa;
         }
 
         /* --- Grid Layout (2 Columns) --- */
@@ -155,7 +193,6 @@
         /* --- Selected State --- */
         .product-card.selected .carousel {
             border: 3px solid #000;
-            /* Box sizing border-box ensures border doesn't break layout */
             box-sizing: border-box; 
         }
 
@@ -263,7 +300,11 @@
 
     <div class="intro">
         <h1>Help me choose</h1>
-        <p>Tap images to select top 3.<br>Tap text to view details.</p>
+        <p>Enter your name & select top 3.</p>
+        
+        <div class="name-wrapper">
+            <input type="text" id="voter-name" placeholder="Your Name" autocomplete="name">
+        </div>
     </div>
 
     <div class="grid" id="product-grid"></div>
@@ -276,6 +317,7 @@
     </div>
 
     <form id="hidden-form" action="https://formspree.io/f/mqajdbzz" method="POST">
+        <input type="hidden" name="Voter_Name" id="input-name">
         <input type="hidden" name="1st_Choice" id="input-1">
         <input type="hidden" name="2nd_Choice" id="input-2">
         <input type="hidden" name="3rd_Choice" id="input-3">
@@ -327,7 +369,7 @@
             {
                 id: "focus_tech",
                 name: "Focus Tech Sweats",
-                url: "https://www.on.com/en-gb/products/apparel/pants", /* Placeholder link used as none provided */
+                url: "https://www.on.com/en-gb/products/apparel/pants",
                 images: [
                     "https://images.ctfassets.net/hnk2vsx53n6l/2KN4cf3zZPpVWsajIqftRr/7dffa44ee56ffbcbb79598639034c548/284e55f1402fac57654f7b65db49a04fd19559dc.jpg?w=600&q=80",
                     "https://images.ctfassets.net/hnk2vsx53n6l/6g23U65JImjiHogtlaVkIJ/8ad6c77bbbada0c1e10e38d39c878099/3dc72becd03571d24564bab7f23ca85b7cba7d4f.jpg?w=600&q=80",
@@ -340,6 +382,7 @@
         const grid = document.getElementById('product-grid');
         const submitBtn = document.getElementById('submit-btn');
         const statusText = document.getElementById('status-text');
+        const nameInput = document.getElementById('voter-name');
 
         function render() {
             grid.innerHTML = '';
@@ -367,7 +410,6 @@
                     
                     <div class="product-info">
                         <a href="${product.url}" target="_blank" class="product-link">${product.name} &#8599;</a>
-                        
                         <button class="select-btn" onclick="toggleSelection('${product.id}')">${btnText}</button>
                     </div>
                 `;
@@ -383,10 +425,8 @@
             const index = selections.findIndex(p => p.id === id);
 
             if(index > -1) {
-                // Remove
                 selections.splice(index, 1);
             } else {
-                // Add (if < 3)
                 if(selections.length < 3) {
                     selections.push(product);
                 }
@@ -396,7 +436,7 @@
 
         function updateUI() {
             if(selections.length === 3) {
-                statusText.innerText = "3 of 3 Selected";
+                statusText.innerText = "Ready to send";
                 submitBtn.classList.add('active');
             } else {
                 const left = 3 - selections.length;
@@ -411,14 +451,36 @@
         }
 
         function submitVote() {
+            // Check Selections
             if(selections.length !== 3) return;
-            
+
+            // Check Name
+            const enteredName = nameInput.value.trim();
+            if(!enteredName) {
+                // Shake or highlight name field
+                nameInput.classList.add('error');
+                nameInput.placeholder = "Name required!";
+                nameInput.focus();
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // Populate Hidden Form
+            document.getElementById('input-name').value = enteredName;
             document.getElementById('input-1').value = selections[0].name;
             document.getElementById('input-2').value = selections[1].name;
             document.getElementById('input-3').value = selections[2].name;
             
+            // Send
             document.getElementById('hidden-form').submit();
         }
+
+        // Remove error class on typing
+        nameInput.addEventListener('input', () => {
+            nameInput.classList.remove('error');
+        });
 
         // Init
         render();
