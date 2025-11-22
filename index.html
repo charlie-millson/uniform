@@ -12,7 +12,6 @@
             --bg-color: #ffffff;
             --text-color: #000000;
             --accent-gray: #f5f5f5;
-            --spacing: 15px;
         }
 
         body {
@@ -77,6 +76,7 @@
             background: transparent;
             border-radius: 0;
             transition: 0.3s;
+            color: #000; /* Ensure text is black */
         }
 
         input#voter-name:focus {
@@ -181,6 +181,7 @@
         /* The Vote Button */
         .select-btn {
             background: #fff;
+            color: #000 !important; /* Forces black text on iOS */
             border: 1px solid #ddd;
             padding: 8px;
             font-size: 11px;
@@ -190,6 +191,16 @@
             transition: 0.2s;
             width: 100%;
             margin-top: 4px;
+            -webkit-appearance: none; /* Removes iOS default button styling */
+            border-radius: 0;
+        }
+
+        /* State: Button disabled visual when limit reached */
+        .select-btn.disabled-state {
+            color: #999 !important;
+            border-color: #eee;
+            background: #f9f9f9;
+            cursor: default;
         }
 
         /* --- Selected State --- */
@@ -200,7 +211,7 @@
 
         .product-card.selected .select-btn {
             background: #000;
-            color: #fff;
+            color: #fff !important;
             border-color: #000;
         }
 
@@ -390,6 +401,9 @@
         function render() {
             grid.innerHTML = '';
             
+            // Check if votes are full
+            const isFull = selections.length >= 3;
+
             products.forEach(product => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
@@ -399,7 +413,17 @@
                 
                 if(isSelected) card.classList.add('selected');
                 const rank = isSelected ? index + 1 : '';
-                const btnText = isSelected ? 'Selected' : 'Add to Vote';
+                
+                // --- NEW LOGIC FOR BUTTON TEXT ---
+                let btnText = 'Add to Vote';
+                let btnClass = 'select-btn';
+
+                if(isSelected) {
+                    btnText = 'Selected';
+                } else if(isFull) {
+                    btnText = 'Limit Reached';
+                    btnClass += ' disabled-state';
+                }
 
                 card.innerHTML = `
                     <div class="rank-badge">${rank}</div>
@@ -413,7 +437,7 @@
                     
                     <div class="product-info">
                         <a href="${product.url}" target="_blank" class="product-link">${product.name} &#8599;</a>
-                        <button class="select-btn" onclick="toggleSelection('${product.id}')">${btnText}</button>
+                        <button class="${btnClass}" onclick="toggleSelection('${product.id}')">${btnText}</button>
                     </div>
                 `;
                 
@@ -454,38 +478,29 @@
         }
 
         function submitVote() {
-            // Check Selections
             if(selections.length !== 3) return;
 
-            // Check Name
             const enteredName = nameInput.value.trim();
             if(!enteredName) {
-                // Shake or highlight name field
                 nameInput.classList.add('error');
                 nameInput.placeholder = "Name required!";
                 nameInput.focus();
-                
-                // Scroll to top
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             }
 
-            // Populate Hidden Form
             document.getElementById('input-name').value = enteredName;
             document.getElementById('input-1').value = selections[0].name;
             document.getElementById('input-2').value = selections[1].name;
             document.getElementById('input-3').value = selections[2].name;
             
-            // Send
             document.getElementById('hidden-form').submit();
         }
 
-        // Remove error class on typing
         nameInput.addEventListener('input', () => {
             nameInput.classList.remove('error');
         });
 
-        // Init
         render();
 
     </script>
