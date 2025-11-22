@@ -3,251 +3,408 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vote My Uniform</title>
+    <title>Select The Uniform</title>
     <style>
+        /* --- On Brand Variables --- */
         :root {
-            --primary: #FFFC00; /* Snapchat Yellow */
-            --dark: #1a1a1a;
-            --light: #ffffff;
-            --gray: #333333;
-            --accent: #007bff;
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --accent-gray: #f2f2f2;
+            --border-radius: 0px; /* On uses sharp or slightly rounded, keeping it sharp/clean */
+            --spacing: 20px;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #000;
-            color: var(--light);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            padding-bottom: 100px; /* Space for fixed footer */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Header & Logo --- */
+        header {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            justify-content: center;
+            padding: 30px 20px;
+            background: var(--bg-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid transparent;
+            transition: 0.3s;
+        }
+        
+        header.scrolled {
+            border-bottom: 1px solid #eee;
+            padding: 15px 20px;
         }
 
-        .container {
-            width: 100%;
-            max-width: 400px; /* Phone size */
-        }
-
-        h1 {
+        /* --- Instructions --- */
+        .intro {
             text-align: center;
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: var(--primary);
-            text-shadow: 0 0 10px rgba(255, 252, 0, 0.3);
+            padding: 0 20px 30px 20px;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
-        p.instructions {
-            text-align: center;
+        .intro h1 {
+            font-size: 16px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .intro p {
             font-size: 14px;
-            color: #ccc;
-            margin-bottom: 30px;
+            color: #666;
+            line-height: 1.4;
         }
 
-        .options-list {
+        /* --- Product Grid --- */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* --- Product Card --- */
+        .product-card {
+            position: relative;
+        }
+
+        /* Image Carousel (Swipeable) */
+        .carousel {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            border-radius: 4px;
+            background: var(--accent-gray);
+            aspect-ratio: 4/5; /* Standard fashion ratio */
+            position: relative;
+        }
+        
+        .carousel::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
         }
 
-        .option-card {
-            background-color: var(--gray);
-            border: 2px solid var(--gray);
-            padding: 15px;
-            border-radius: 12px;
-            cursor: pointer;
+        .carousel img {
+            flex: 0 0 100%;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            scroll-snap-align: start;
+        }
+
+        /* Carousel Dots */
+        .dots {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            pointer-events: none;
+        }
+        
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+        }
+
+        /* Product Info */
+        .product-info {
+            padding-top: 12px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s ease;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            align-items: flex-start;
         }
 
-        .option-card:active {
-            transform: scale(0.98);
+        .product-name {
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
-        /* Styles for when an item is selected */
-        .option-card.selected {
-            border-color: var(--primary);
-            background-color: #2a2a2a;
-        }
-
-        .rank-badge {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
+        .select-btn {
             background: transparent;
-            border: 2px solid #555;
+            border: 1px solid #000;
+            padding: 8px 20px;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        /* --- Selected State Styling --- */
+        .product-card.selected .carousel {
+            border: 4px solid #000;
+        }
+        
+        .product-card.selected .select-btn {
+            background: #000;
+            color: #fff;
+        }
+
+        /* The Rank Number Badge (Top Left) */
+        .rank-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #000;
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 18px;
             font-weight: bold;
-            font-size: 14px;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+            pointer-events: none;
         }
 
-        /* Rank Colors */
-        .rank-1 { background-color: #FFD700; color: #000; border: none; box-shadow: 0 0 10px #FFD700; } /* Gold */
-        .rank-2 { background-color: #C0C0C0; color: #000; border: none; } /* Silver */
-        .rank-3 { background-color: #CD7F32; color: #000; border: none; } /* Bronze */
+        .product-card.selected .rank-badge {
+            opacity: 1;
+            transform: scale(1);
+        }
 
-        .controls {
-            margin-top: 30px;
+        /* --- Sticky Footer --- */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-top: 1px solid #eee;
             display: flex;
             flex-direction: column;
             gap: 10px;
+            align-items: center;
+            z-index: 200;
         }
 
-        button.submit-btn {
-            background-color: var(--primary);
-            color: #000;
-            font-weight: 800;
+        .submit-btn {
+            width: 100%;
+            max-width: 400px;
+            background: #000;
+            color: #fff;
             border: none;
-            padding: 15px;
-            border-radius: 30px;
-            font-size: 18px;
+            padding: 16px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
             cursor: pointer;
-            opacity: 0.5;
+            opacity: 0.3;
             pointer-events: none;
+            border-radius: 50px; /* Rounded pill button typical of On UI */
             transition: 0.3s;
         }
 
-        button.submit-btn.active {
+        .submit-btn.active {
             opacity: 1;
             pointer-events: all;
-            box-shadow: 0 0 15px rgba(255, 252, 0, 0.5);
         }
 
-        button.reset-btn {
-            background: transparent;
-            color: #777;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            font-size: 14px;
+        .reset-link {
+            font-size: 12px;
+            color: #999;
             text-decoration: underline;
+            cursor: pointer;
+            background: none;
+            border: none;
         }
 
-        /* Hidden form for Netlify/Formspree */
-        #hidden-form {
-            display: none;
-        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Help Pick My Fit 👕</h1>
-        <p class="instructions">Tap your top 3 choices in order.<br>1st = Gold, 2nd = Silver, 3rd = Bronze.</p>
+    <header id="header">
+        <svg xmlns:xlink="http://www.w3.org/1999/xlink" width="54" height="54" viewBox="0 0 54 54" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M36.281 11.384c-.056.058-.114.13-.17.188l-2.364 2.41-.057.058c-.057.072-.057.145.014.247a8.331 8.331 0 0 1 1.096 3.309c.257 2.409-.342 4.571-1.822 6.473-1.268 1.625-2.92 2.64-4.899 3.09-.911.204-1.837.218-2.762.117-1.524-.16-2.891-.726-4.116-1.655-1.766-1.335-2.862-3.105-3.318-5.311-.17-.813-.199-1.64-.128-2.453.171-1.901.883-3.585 2.15-5.022 1.21-1.379 2.692-2.278 4.443-2.685a8.03 8.03 0 0 1 2.635-.189 8.5 8.5 0 0 1 3.588 1.147c.142.087.2.029.285-.058l2.35-2.395c.056-.058.113-.13.185-.217l2.889 2.945.001.001Zm-5.342 7.4c.071-2.8-2.093-4.832-4.529-4.905-2.748-.073-4.798 2.25-4.798 4.76 0 2.57 2.122 4.79 4.67 4.746 2.507.03 4.6-2.076 4.656-4.6Zm3.605 19.391c.014 2.351 0 4.717 0 7.068v.32h-4.13v-.29c0-2.468.015-4.935 0-7.403 0-1.291-.44-2.423-1.366-3.323a3.827 3.827 0 0 0-2.208-1.06c-1.11-.16-2.121.117-3.018.799-.898.696-1.424 1.64-1.595 2.757-.086.537-.1 1.089-.1 1.64-.014 2.192 0 4.369 0 6.56v.305h-4.101v-.276c0-2.656-.029-5.326.014-7.982.029-1.408.47-2.743 1.196-3.962 1.21-2.032 2.934-3.338 5.198-3.875a8.414 8.414 0 0 1 2.178-.203c2.265.101 4.201 1.015 5.74 2.742 1.096 1.248 1.794 2.7 2.036 4.369.098.608.155 1.217.155 1.812"></path>
+        </svg>
+    </header>
 
-        <div class="options-list" id="options-container">
-            </div>
+    <div class="intro">
+        <h1>The Uniform</h1>
+        <p>Select your top 3 in order.<br>Swipe images to see details.</p>
+    </div>
 
-        <div class="controls">
-            <button class="submit-btn" id="submit-btn" onclick="submitVote()">Send Vote 🚀</button>
-            <button class="reset-btn" onclick="resetVotes()">Reset Selection</button>
+    <div class="grid" id="product-grid">
         </div>
+
+    <div class="footer">
+        <button id="submit-btn" class="submit-btn" onclick="submitVote()">Select 3 items</button>
+        <button class="reset-link" onclick="resetVotes()">Reset Selections</button>
     </div>
 
     <form id="hidden-form" action="https://formspree.io/f/mqajdbzz" method="POST">
-        <input type="hidden" name="First_Choice_3pts" id="input-1">
-        <input type="hidden" name="Second_Choice_2pts" id="input-2">
-        <input type="hidden" name="Third_Choice_1pt" id="input-3">
+        <input type="hidden" name="First_Place" id="input-1">
+        <input type="hidden" name="Second_Place" id="input-2">
+        <input type="hidden" name="Third_Place" id="input-3">
     </form>
 
     <script>
-        const items = [
-            "Club pants",
-            "Weather pants",
-            "Track pants",
-            "Focus shorts",
-            "Focus tech sweatpants"
+        // Data Config
+        const products = [
+            {
+                id: "club_pants",
+                name: "Club Pants",
+                images: [
+                    "https://images.ctfassets.net/hnk2vsx53n6l/3Xn0CoBxFWpMQ4uybaxZ5o/e18de739c49ce51a18de625eb39a375b/ppnvzymonhw6kwymjy8g.png?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80",
+                    "https://images.ctfassets.net/hnk2vsx53n6l/gfzFpaBa3L9NeNl3X7vtC/78078581c42126b74c391d8effa216a9/vovxyws7boussezgd4hj.png?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80",
+                    "https://images.ctfassets.net/hnk2vsx53n6l/4WglcBHdgU4uJVuAg6RlA0/59328db713fcea226a068200d9e7ae5f/rsnxjtsgfnwuosiei5tf.png?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80"
+                ]
+            },
+            {
+                id: "weather_pants",
+                name: "Weather Pants",
+                images: [
+                    "https://images.ctfassets.net/hnk2vsx53n6l/wQ8htuvKT7o3Sley7TG0B/2d6fe71f8ee3f2a47945fb0583c33c2d/9f539182d546718694043b55da61889cc5ae5d3b.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80",
+                    "https://images.ctfassets.net/hnk2vsx53n6l/2bCr18PDgSbqfi79HGJZfP/22923785e0a8528a34cf0d9c624f0642/0bd942efa19c6856e858ec3155f47a59c9150f37.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80",
+                    "https://images.ctfassets.net/hnk2vsx53n6l/457fhnoefGX8OAIcRWwEDV/499a22f7eba1a78c4ad42cf5945f917f/362ef349010f08f0de8dc5cb3907ece902fec5cc.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80"
+                ]
+            },
+            {
+                id: "track_pants",
+                name: "Track Pants",
+                images: [
+                    "https://images.ctfassets.net/hnk2vsx53n6l/59YxUwUeloTLqg9SHw64sG/8889d4ac50673b682be75c042aa9a484/9558f8ac73343a7aef8a90674b930ad42b9fd125.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80",
+                    "https://images.ctfassets.net/hnk2vsx53n6l/2qT0pOcUbSWx0VhkyauZMp/1731e446f7692c7bcc3b3e3b0b2daa75/247f29851813258c65191cfa2196f242030220ef.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80",
+                    "https://images.ctfassets.net/hnk2vsx53n6l/1ninmdcYZn1TMknf9B4MpA/d7b04ce7636debbdace7bc4bd78c6ab8/fb10fda1b16ac399cea9d509af8fdc4326014401.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80"
+                ]
+            },
+            {
+                id: "focus_shorts",
+                name: "Focus Shorts",
+                images: [
+                    "https://images.ctfassets.net/hnk2vsx53n6l/7LaTtjTahIK7uUOaOLcMwW/89db789824ba9e28bec061e469a9e1c1/18fcdbff6e81a4f8e269d379692e86ffee30d65a.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80",
+                    "https://images.ctfassets.net/hnk2vsx53n6l/3HYkYJZXz9uqPG9zziIRaW/c4822dffd058a2efa1e188e4cefa05ed/b46c661d14f8d4d9f3b0710659a75f6291fdcaee.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80",
+                    "https://images.ctfassets.net/hnk2vsx53n6l/6mXloHecGLOhbk23Gn286n/7808c9a9e04d887273f759fa30720c45/ad12c29161eba5a4613987e28b22de6124035e9c.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80"
+                ]
+            },
+            {
+                id: "focus_tech",
+                name: "Focus Tech Sweats",
+                images: [
+                    "https://images.ctfassets.net/hnk2vsx53n6l/2KN4cf3zZPpVWsajIqftRr/7dffa44ee56ffbcbb79598639034c548/284e55f1402fac57654f7b65db49a04fd19559dc.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80",
+                    "https://images.ctfassets.net/hnk2vsx53n6l/6g23U65JImjiHogtlaVkIJ/8ad6c77bbbada0c1e10e38d39c878099/3dc72becd03571d24564bab7f23ca85b7cba7d4f.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80",
+                    "https://images.ctfassets.net/hnk2vsx53n6l/7l5BsQqwGz9Jg9qR0xTxoA/f4b8281306f4b4b4a36001644b762e0c/40a48506d6f978e4178b67871ae91920c9f1e778.jpg?w=1920&h=2400&fm=avif&f=center&fit=fill&q=80"
+                ]
+            }
         ];
 
-        let selections = []; // Stores the clicked items in order
-
-        const container = document.getElementById('options-container');
+        let selections = [];
+        const grid = document.getElementById('product-grid');
         const submitBtn = document.getElementById('submit-btn');
 
-        // Initialize the list
-        function renderList() {
-            container.innerHTML = '';
-            items.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'option-card';
-                
-                // Check if this item is selected
-                const index = selections.indexOf(item);
-                
-                let badgeContent = '';
-                let badgeClass = '';
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            if(window.scrollY > 10) header.classList.add('scrolled');
+            else header.classList.remove('scrolled');
+        });
 
-                if (index > -1) {
-                    card.classList.add('selected');
-                    const rank = index + 1;
-                    badgeContent = rank; // 1, 2, or 3
-                    badgeClass = `rank-${rank}`;
-                }
+        function render() {
+            grid.innerHTML = '';
+            
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                
+                const index = selections.findIndex(p => p.id === product.id);
+                const isSelected = index > -1;
+                if(isSelected) card.classList.add('selected');
+
+                const rank = isSelected ? index + 1 : '';
+                const btnText = isSelected ? 'Selected' : 'Add';
 
                 card.innerHTML = `
-                    <span>${item}</span>
-                    <div class="rank-badge ${badgeClass}">${badgeContent}</div>
+                    <div class="rank-badge">${rank}</div>
+                    <div class="carousel">
+                        ${product.images.map(img => `<img src="${img}" loading="lazy" alt="${product.name}">`).join('')}
+                        <div class="dots">
+                            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                        </div>
+                    </div>
+                    <div class="product-info" onclick="toggleSelection('${product.id}')">
+                        <div class="product-name">${product.name}</div>
+                        <button class="select-btn">${btnText}</button>
+                    </div>
                 `;
-
-                card.onclick = () => handleSelection(item);
-                container.appendChild(card);
+                
+                // Make entire card clickable for selection, but allow swipe
+                // We handle click logic slightly carefully so swiping doesn't trigger click
+                // For simplicity in this demo, clicking the Info area triggers selection
+                
+                grid.appendChild(card);
             });
 
-            updateSubmitButton();
+            updateUI();
         }
 
-        function handleSelection(item) {
-            const index = selections.indexOf(item);
+        function toggleSelection(id) {
+            const product = products.find(p => p.id === id);
+            const index = selections.findIndex(p => p.id === id);
 
-            if (index > -1) {
-                // If already selected, remove it (deselect)
+            if(index > -1) {
+                // Deselect
                 selections.splice(index, 1);
             } else {
-                // If not selected, add it (only if we have less than 3)
-                if (selections.length < 3) {
-                    selections.push(item);
+                // Select if room
+                if(selections.length < 3) {
+                    selections.push(product);
                 }
             }
-            renderList();
+            render();
         }
 
-        function updateSubmitButton() {
-            if (selections.length === 3) {
+        function updateUI() {
+            if(selections.length === 3) {
+                submitBtn.innerText = "Submit Vote";
                 submitBtn.classList.add('active');
-                submitBtn.innerText = "Send Vote 🚀";
             } else {
+                const left = 3 - selections.length;
+                submitBtn.innerText = `Select ${left} more`;
                 submitBtn.classList.remove('active');
-                const remaining = 3 - selections.length;
-                submitBtn.innerText = `Pick ${remaining} more`;
             }
         }
 
         function resetVotes() {
             selections = [];
-            renderList();
+            render();
         }
 
         function submitVote() {
-            if (selections.length !== 3) return;
-
-            // Populate hidden form
-            document.getElementById('input-1').value = selections[0];
-            document.getElementById('input-2').value = selections[1];
-            document.getElementById('input-3').value = selections[2];
-
-            // Submit the hidden form
+            if(selections.length !== 3) return;
+            
+            document.getElementById('input-1').value = selections[0].name;
+            document.getElementById('input-2').value = selections[1].name;
+            document.getElementById('input-3').value = selections[2].name;
+            
             document.getElementById('hidden-form').submit();
         }
 
-        // Initial Render
-        renderList();
+        // Init
+        render();
+
     </script>
 </body>
 </html>
